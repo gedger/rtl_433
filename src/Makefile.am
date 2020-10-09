@@ -18,11 +18,13 @@ rtl_433_SOURCES      = abuf.c \
                        optparse.c \
                        output_influx.c \
                        output_mqtt.c \
+                       pulse_analyzer.c \
                        pulse_demod.c \
                        pulse_detect.c \
                        pulse_detect_fsk.c \
                        r_api.c \
                        r_util.c \
+                       rfraw.c \
                        rtl_433.c \
                        samp_grab.c \
                        sdr.c \
@@ -99,6 +101,7 @@ rtl_433_SOURCES      = abuf.c \
                        devices/kerui.c \
                        devices/klimalogg.c \
                        devices/lacrosse.c \
+                       devices/lacrosse_breezepro.c \
                        devices/lacrosse_tx141x.c \
                        devices/lacrosse_tx35.c \
                        devices/lacrosse_ws7000.c \
@@ -132,14 +135,17 @@ rtl_433_SOURCES      = abuf.c \
                        devices/s3318p.c \
                        devices/schraeder.c \
                        devices/scmplus.c \
+                       devices/secplus_v2.c \
                        devices/sharp_spc775.c \
                        devices/silvercrest.c \
                        devices/simplisafe.c \
                        devices/smoke_gs558.c \
                        devices/solight_te44.c \
+                       devices/somfy.c \
                        devices/springfield.c \
                        devices/steelmate.c \
                        devices/tfa_30_3196.c \
+                       devices/tfa_30_3221.c \
                        devices/tfa_drop_30.3233.c \
                        devices/tfa_pool_thermometer.c \
                        devices/tfa_twin_plus_30.3049.c \

@@ -171,6 +171,10 @@
     DECL(netidm) \
     DECL(thermopro_tx2) \
     DECL(acurite_590tx) \
+    DECL(secplus_v2) \
+    DECL(tfa_30_3221) \
+    DECL(lacrosse_breezepro) \
+    DECL(somfy_rts) \
     /* Add new decoders here. */
 
 #define DECL(name) extern r_device name;

@@ -196,7 +196,7 @@ static int parse_insteon_pkt(r_device *decoder, bitbuffer_t *bits, unsigned int 
 
     /*   Is this overkill ??
     unsigned int l;
-    if(extended) {
+    if (extended) {
          l = 642;
      } else {
          l = 278;
@@ -257,7 +257,7 @@ static int parse_insteon_pkt(r_device *decoder, bitbuffer_t *bits, unsigned int 
     }
 
     // if (decoder->verbose > 1) {
-    //     for(int j=0; j < results_len; j++) {
+    //     for (int j=0; j < results_len; j++) {
     //          fprintf(stderr, "%d:%02X ", j,  results[j]);
     //     }
     //     puts("\n");
@@ -510,7 +510,7 @@ r_device insteon = {
         .modulation  = FSK_PULSE_PCM,
         .short_width = 110, // short gap is 132 us
         .long_width  = 110, // long gap is 224 us
-        .gap_limit   = 300, // some distance above long
+        .gap_limit   = 500, // some distance above long
         .tolerance   = 15,
         .reset_limit = 1000, // a bit longer than packet gap
         .decode_fn   = &insteon_callback,

@@ -35,9 +35,11 @@
 #include "r_api.h"
 #include "sdr.h"
 #include "baseband.h"
+#include "pulse_analyzer.h"
 #include "pulse_detect.h"
 #include "pulse_detect_fsk.h"
 #include "pulse_demod.h"
+#include "rfraw.h"
 #include "data.h"
 #include "r_util.h"
 #include "optparse.h"
@@ -67,6 +69,16 @@
 #include "getopt/getopt.h"
 #endif
 
+// note that Clang has _Noreturn but it's C11
+// #if defined(__clang__) ...
+#if defined(__GNUC__)
+#define _Noreturn __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define _Noreturn __declspec(noreturn)
+#else
+#define _Noreturn
+#endif
+
 r_device *flex_create_device(char *spec); // maybe put this in some header file?
 
 static void print_version(void)
@@ -75,6 +87,7 @@ static void print_version(void)
     fprintf(stderr, "Use -h for usage help and see https://triq.org/ for documentation.\n");
 }
 
+_Noreturn
 static void usage(int exit_code)
 {
     term_help_printf(
@@ -128,6 +141,7 @@ static void usage(int exit_code)
     exit(exit_code);
 }
 
+_Noreturn
 static void help_protocols(r_device *devices, unsigned num_devices, int exit_code)
 {
     unsigned i;
@@ -145,6 +159,7 @@ static void help_protocols(r_device *devices, unsigned num_devices, int exit_cod
     exit(exit_code);
 }
 
+_Noreturn
 static void help_device(void)
 {
     term_help_printf(
@@ -170,6 +185,7 @@ static void help_device(void)
     exit(0);
 }
 
+_Noreturn
 static void help_gain(void)
 {
     term_help_printf(
@@ -181,6 +197,7 @@ static void help_gain(void)
     exit(0);
 }
 
+_Noreturn
 static void help_output(void)
 {
     term_help_printf(
@@ -206,6 +223,7 @@ static void help_output(void)
     exit(0);
 }
 
+_Noreturn
 static void help_meta(void)
 {
     term_help_printf(
@@ -230,6 +248,7 @@ static void help_meta(void)
     exit(0);
 }
 
+_Noreturn
 static void help_read(void)
 {
     term_help_printf(
@@ -251,6 +270,7 @@ static void help_read(void)
     exit(0);
 }
 
+_Noreturn
 static void help_write(void)
 {
     term_help_printf(
@@ -1330,10 +1350,29 @@ int main(int argc, char **argv) {
                 }
                 if (cfg->verbosity)
                     fprintf(stderr, "Verifying test data with device %s.\n", r_dev->name);
+                if (rfraw_check(e)) {
+                    pulse_data_t pulse_data = {0};
+                    rfraw_parse(&pulse_data, e);
+                    list_t single_dev = {0};
+                    list_push(&single_dev, r_dev);
+                    if (!pulse_data.fsk_f2_est)
+                        r += run_ook_demods(&single_dev, &pulse_data);
+                    else
+                        r += run_fsk_demods(&single_dev, &pulse_data);
+                    list_free_elems(&single_dev, NULL);
+                } else
                 r += pulse_demod_string(e, r_dev);
                 continue;
             }
             // otherwise test all decoders
+            if (rfraw_check(line)) {
+                pulse_data_t pulse_data = {0};
+                rfraw_parse(&pulse_data, line);
+                if (!pulse_data.fsk_f2_est)
+                    r += run_ook_demods(&demod->r_devs, &pulse_data);
+                else
+                    r += run_fsk_demods(&demod->r_devs, &pulse_data);
+            } else
             for (void **iter = demod->r_devs.elems; iter && *iter; ++iter) {
                 r_device *r_dev = *iter;
                 if (cfg->verbosity)
@@ -1352,6 +1391,14 @@ int main(int argc, char **argv) {
     // Special case for string test data
     if (cfg->test_data) {
         r = 0;
+        if (rfraw_check(cfg->test_data)) {
+            pulse_data_t pulse_data = {0};
+            rfraw_parse(&pulse_data, cfg->test_data);
+            if (!pulse_data.fsk_f2_est)
+                r += run_ook_demods(&demod->r_devs, &pulse_data);
+            else
+                r += run_fsk_demods(&demod->r_devs, &pulse_data);
+        } else
         for (void **iter = demod->r_devs.elems; iter && *iter; ++iter) {
             r_device *r_dev = *iter;
             if (cfg->verbosity)
@@ -1415,6 +1462,18 @@ int main(int argc, char **argv) {
                     pulse_data_load(in_file, &demod->pulse_data, cfg->samp_rate);
                     if (!demod->pulse_data.num_pulses)
                         break;
+
+                    for (void **iter2 = demod->dumper.elems; iter2 && *iter2; ++iter2) {
+                        file_info_t const *dumper = *iter2;
+                        if (dumper->format == VCD_LOGIC) {
+                            pulse_data_print_vcd(dumper->file, &demod->pulse_data, '\'');
+                        } else if (dumper->format == PULSE_OOK) {
+                            pulse_data_dump(dumper->file, &demod->pulse_data);
+                        } else {
+                            fprintf(stderr, "Dumper (%s) not supported on OOK input\n", dumper->spec);
+                            exit(1);
+                        }
+                    }
 
                     if (demod->pulse_data.fsk_f2_est) {
                         run_fsk_demods(&demod->r_devs, &demod->pulse_data);

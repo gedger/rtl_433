@@ -39,6 +39,7 @@ Wireless Chimes
 
 static int honeywell_wdb_callback(r_device *decoder, bitbuffer_t *bitbuffer) {
     int row, secret_knock, relay, battery, parity, open, opened, closed, tampered;
+
     uint8_t *bytes;
     data_t *data;
     unsigned int device, tmp, type;
