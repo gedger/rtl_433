@@ -37,7 +37,8 @@ Wireless Chimes
 
 #include "decoder.h"
 
-static int honeywell_wdb_callback(r_device *decoder, bitbuffer_t *bitbuffer) {
+static int honeywell_wdb_callback(r_device *decoder, bitbuffer_t *bitbuffer)
+{
     int row, secret_knock, relay, battery, parity, open, opened, closed, tampered;
 
     uint8_t *bytes;
@@ -93,7 +94,7 @@ static int honeywell_wdb_callback(r_device *decoder, bitbuffer_t *bitbuffer) {
         case 0x3: alert = "Full"; break;
         default:  alert = "Unknown"; break;
     }
-    
+
     /* this bit appears to have two uses depending on whether the sensor is a bell push or contact sensor */
     secret_knock = (bytes[5]&0x10) >> 4;
     tampered=secret_knock;
@@ -107,7 +108,7 @@ static int honeywell_wdb_callback(r_device *decoder, bitbuffer_t *bitbuffer) {
     battery = (bytes[5]&0x2) >> 1;
     opened = (bytes[5]&0x20) >> 5;
     closed = (bytes[5]&0x40) >> 6;
-    
+
     /* this catches the tamper signal when the open/close is not valid */
     if (opened && !closed) {
     	open = 1;
@@ -118,7 +119,6 @@ static int honeywell_wdb_callback(r_device *decoder, bitbuffer_t *bitbuffer) {
     else {
     	open = -1;
     }
-    
 
     /* clang-format off */
     data = data_make(
